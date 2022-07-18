@@ -65,7 +65,6 @@ id:
   WorkflowDefinition:
     DESCRIPTION: Deskripsi
     TITLE: Judul
-  WorkflowEmbargoExpiryExtension:
     ActiveWorkflowStateTitle: Aktif
   WorkflowField:
     CreateLabel: Buat
