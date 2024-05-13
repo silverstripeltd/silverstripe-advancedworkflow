@@ -145,7 +145,7 @@ class WorkflowInstance extends DataObject
             $action = $this->CurrentAction();
             if ($action->exists()) {
                 $actionFields = $this->getWorkflowFields();
-                $fields->addFieldsToTab('Root.Main', $actionFields);
+                $fields->addFieldsToTab('Root.Main', $actionFields->toArray());
 
                 $transitions = $action->getValidTransitions();
                 if ($transitions) {
@@ -168,7 +168,7 @@ class WorkflowInstance extends DataObject
             $items
         );
 
-        $fields->addFieldsToTab('Root.Main', $grid);
+        $fields->addFieldToTab('Root.Main', $grid);
 
         $this->extend('updateCMSFields', $fields);
 

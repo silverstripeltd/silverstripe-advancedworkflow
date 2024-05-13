@@ -85,7 +85,7 @@ class AdvancedWorkflowExtension extends Extension
                 'Root.WorkflowActions',
                 _t('Workflow.WorkflowActionsTabTitle', 'Workflow Actions')
             );
-            $fields->addFieldsToTab('Root.WorkflowActions', $wfFields);
+            $fields->addFieldsToTab('Root.WorkflowActions', $wfFields->toArray());
 
             $form->loadDataFrom($data);
 

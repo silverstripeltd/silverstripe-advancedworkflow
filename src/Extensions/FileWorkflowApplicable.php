@@ -45,7 +45,7 @@ class FileWorkflowApplicable extends WorkflowApplicable
                 'Root.WorkflowActions',
                 _t('Workflow.WorkflowActionsTabTitle', 'Workflow Actions')
             );
-            $fields->addFieldsToTab('Root.WorkflowActions', $wfFields);
+            $fields->addFieldsToTab('Root.WorkflowActions', $wfFields->toArray());
         }
     }
 
