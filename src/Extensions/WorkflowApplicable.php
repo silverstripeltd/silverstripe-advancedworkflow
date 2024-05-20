@@ -106,12 +106,12 @@ class WorkflowApplicable extends DataExtension
      */
     protected $currentInstance;
 
-    public function updateSettingsFields(FieldList $fields)
+    protected function updateSettingsFields(FieldList $fields)
     {
         $this->updateFields($fields);
     }
 
-    public function updateCMSFields(FieldList $fields)
+    protected function updateCMSFields(FieldList $fields)
     {
         if (!$this->owner->hasMethod('getSettingsFields')) {
             $this->updateFields($fields);
@@ -184,7 +184,7 @@ class WorkflowApplicable extends DataExtension
         }
     }
 
-    public function updateCMSActions(FieldList $actions)
+    protected function updateCMSActions(FieldList $actions)
     {
         $active = $this->getWorkflowService()->getWorkflowFor($this->owner);
         $c = Controller::curr();
@@ -325,7 +325,7 @@ class WorkflowApplicable extends DataExtension
      * After a workflow item is written, we notify the
      * workflow so that it can take action if needbe
      */
-    public function onAfterWrite()
+    protected function onAfterWrite()
     {
         $instance = $this->getWorkflowInstance();
         if ($instance && $instance->CurrentActionID) {

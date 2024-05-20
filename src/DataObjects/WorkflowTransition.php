@@ -87,7 +87,7 @@ class WorkflowTransition extends DataObject
     /**
      * Before saving, make sure we're not in an infinite loop
      */
-    public function onBeforeWrite()
+    protected function onBeforeWrite()
     {
         if (!$this->Sort) {
             $this->Sort = DB::query('SELECT MAX("Sort") + 1 FROM "WorkflowTransition"')->value();

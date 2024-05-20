@@ -185,7 +185,7 @@ class WorkflowAction extends DataObject
         return true;
     }
 
-    public function onBeforeWrite()
+    protected function onBeforeWrite()
     {
         if (!$this->Sort) {
             $this->Sort = DB::query('SELECT MAX("Sort") + 1 FROM "WorkflowAction"')->value();
@@ -199,7 +199,7 @@ class WorkflowAction extends DataObject
      * are deleted
      * Also removes all outbound transitions
      */
-    public function onAfterDelete()
+    protected function onAfterDelete()
     {
         parent::onAfterDelete();
         $wfActionInstances = WorkflowActionInstance::get()

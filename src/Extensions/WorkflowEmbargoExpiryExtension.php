@@ -91,7 +91,7 @@ class WorkflowEmbargoExpiryExtension extends DataExtension
     /**
      * @param FieldList $fields
      */
-    public function updateCMSFields(FieldList $fields)
+    protected function updateCMSFields(FieldList $fields)
     {
         // requirements
         // ------------
@@ -246,7 +246,7 @@ class WorkflowEmbargoExpiryExtension extends DataExtension
             ->queueJob($job, $when ? date('Y-m-d H:i:s', $when) : null);
     }
 
-    public function onBeforeDuplicate($original, $doWrite)
+    protected function onBeforeDuplicate($original, $doWrite)
     {
         $clone = $this->owner;
 
@@ -259,7 +259,7 @@ class WorkflowEmbargoExpiryExtension extends DataExtension
     /**
      * {@see PublishItemWorkflowAction} for approval of requested publish dates
      */
-    public function onBeforeWrite()
+    protected function onBeforeWrite()
     {
         parent::onBeforeWrite();
 
@@ -341,7 +341,7 @@ class WorkflowEmbargoExpiryExtension extends DataExtension
      *
      * @param $flags
      */
-    public function updateStatusFlags(&$flags)
+    protected function updateStatusFlags(&$flags)
     {
         $embargo = $this->getIsPublishScheduled();
         $expiry = $this->getIsUnPublishScheduled();
