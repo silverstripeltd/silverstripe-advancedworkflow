@@ -106,7 +106,7 @@ class AdvancedWorkflowExtension extends Extension
     /**
      * @param Form $form
      */
-    public function updateItemEditForm($form)
+    protected function updateItemEditForm($form)
     {
         /** @var DataObject $record */
         $record = $form->getRecord();

@@ -121,7 +121,7 @@ class WorkflowDefinition extends DataObject
     /**
      * Ensure a sort value is set and we get a useable initial workflow title.
      */
-    public function onBeforeWrite()
+    protected function onBeforeWrite()
     {
         if (!$this->Sort) {
             $this->Sort = DB::query('SELECT MAX("Sort") + 1 FROM "WorkflowDefinition"')->value();
@@ -137,7 +137,7 @@ class WorkflowDefinition extends DataObject
      * After we've been written, check whether we've got a template and to then
      * create the relevant actions etc.
      */
-    public function onAfterWrite()
+    protected function onAfterWrite()
     {
         parent::onAfterWrite();
 
@@ -158,7 +158,7 @@ class WorkflowDefinition extends DataObject
      *
      * @return null
      */
-    public function onBeforeDelete()
+    protected function onBeforeDelete()
     {
         parent::onBeforeDelete();
 

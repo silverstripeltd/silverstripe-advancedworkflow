@@ -17,13 +17,13 @@ use SilverStripe\Forms\Form;
  */
 class FileWorkflowApplicable extends WorkflowApplicable
 {
-    public function updateSummaryFields(&$fields)
+    protected function updateSummaryFields(&$fields)
     {
         $fields['ID'] = 'ID';
         $fields['ParentID'] = 'ParentID';
     }
 
-    public function updateCMSFields(FieldList $fields)
+    protected function updateCMSFields(FieldList $fields)
     {
         if (!$this->owner->ID) {
             return $fields;
@@ -49,7 +49,7 @@ class FileWorkflowApplicable extends WorkflowApplicable
         }
     }
 
-    public function onAfterWrite()
+    protected function onAfterWrite()
     {
         parent::onAfterWrite();
 

@@ -189,7 +189,7 @@ class WorkflowInstance extends DataObject
     /**
      * See if we've been saved in context of managing the workflow directly
      */
-    public function onBeforeWrite()
+    protected function onBeforeWrite()
     {
         parent::onBeforeWrite();
 
