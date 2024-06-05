@@ -105,11 +105,11 @@ class AWRequiredFields extends RequiredFields
 
     public function setCaller($caller)
     {
-        self::$caller = $caller;
+        AWRequiredFields::$caller = $caller;
     }
 
     public function getCaller()
     {
-        return self::$caller;
+        return AWRequiredFields::$caller;
     }
 }
