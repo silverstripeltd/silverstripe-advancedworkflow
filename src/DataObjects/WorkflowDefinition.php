@@ -473,7 +473,7 @@ class WorkflowDefinition extends DataObject
         } elseif (isset($req['Title']) && !empty($req['Title'])) {
             $incomingTitle = $req['Title'];
         } else {
-            $incomingTitle = self::$default_workflow_title_base;
+            $incomingTitle = WorkflowDefinition::$default_workflow_title_base;
         }
         return $incomingTitle;
     }

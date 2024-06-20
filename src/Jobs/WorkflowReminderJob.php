@@ -31,7 +31,7 @@ class WorkflowReminderJob extends AbstractQueuedJob
     public function __construct($repeatInterval = 0)
     {
         if (!$this->repeatInterval) {
-            $this->repeatInterval = $repeatInterval ? $repeatInterval : self::DEFAULT_REPEAT;
+            $this->repeatInterval = $repeatInterval ? $repeatInterval : WorkflowReminderJob::DEFAULT_REPEAT;
             $this->totalSteps = 2;
             $this->currentStep = 1;
         }

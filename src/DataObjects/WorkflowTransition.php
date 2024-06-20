@@ -282,19 +282,19 @@ class WorkflowTransition extends DataObject
         $check = array('ActionID','NextActionID');
         foreach ($check as $fieldName) {
             if (!isset($data[$fieldName])) {
-                return self::$extendedMethodReturn;
+                return WorkflowTransition::$extendedMethodReturn;
             }
         }
         // Have we found some identical values?
         if ($data[$check[0]] == $data[$check[1]]) {
             // Used to display to the user, so the first of the array is fine
-            self::$extendedMethodReturn['fieldName'] = $check[0];
-            self::$extendedMethodReturn['fieldValid'] = false;
-            self::$extendedMethodReturn['fieldMsg'] = _t(
+            WorkflowTransition::$extendedMethodReturn['fieldName'] = $check[0];
+            WorkflowTransition::$extendedMethodReturn['fieldValid'] = false;
+            WorkflowTransition::$extendedMethodReturn['fieldMsg'] = _t(
                 'WorkflowTransition.TRANSITIONLOOP',
                 'A transition cannot lead back to its parent action.'
             );
         }
-        return self::$extendedMethodReturn;
+        return WorkflowTransition::$extendedMethodReturn;
     }
 }
