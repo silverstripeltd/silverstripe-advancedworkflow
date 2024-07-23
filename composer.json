@@ -30,7 +30,7 @@
         "phpunit/phpunit": "^9.6",
         "squizlabs/php_codesniffer": "^3",
         "silverstripe/standards": "^1",
-        "phpstan/extension-installer": "^1.3"
+        "phpstan/extension-installer": "^1.3",
         "silverstripe-terraformers/embargo-expiry": "^2.0"
     },
     "extra": {
