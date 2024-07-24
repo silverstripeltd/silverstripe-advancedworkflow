@@ -213,14 +213,6 @@ eo:
   Symbiote\AdvancedWorkflow\Extensions\WorkflowApplicable:
     has_one_WorkflowDefinition: 'Laborflua difino'
     many_many_AdditionalWorkflowDefinitions: 'Kromaj laborfluoj'
-  Symbiote\AdvancedWorkflow\Extensions\WorkflowEmbargoExpiryExtension:
-    db_AllowEmbargoedEditing: 'Permesi embargitan redaktadon'
-    db_DesiredPublishDate: 'Dezirata publikiga dato'
-    db_DesiredUnPublishDate: 'Dezirata malpublikiga dato'
-    db_PublishOnDate: 'Publikigi je dato'
-    db_UnPublishOnDate: 'Malpublikigi je dato'
-    has_one_PublishJob: 'Publikigi taskon'
-    has_one_UnPublishJob: 'Malpublikigi taskon'
   Symbiote\AdvancedWorkflow\Forms\GridField\GridFieldExportAction:
     Export: Eksporti
   UnpublishItemWorkflowAction:
