@@ -92,7 +92,7 @@ class WorkflowApplicable extends DataExtension
     public function updateFields(FieldList $fields)
     {
         if (!$this->owner->ID) {
-            return $fields;
+            return;
         }
 
         $tab = $fields->fieldByName('Root') ? $fields->findOrMakeTab('Root.Workflow') : $fields;
