@@ -28,6 +28,7 @@ use Symbiote\AdvancedWorkflow\DataObjects\WorkflowDefinition;
 use Symbiote\AdvancedWorkflow\DataObjects\WorkflowInstance;
 use Symbiote\AdvancedWorkflow\Services\WorkflowService;
 use Terraformers\EmbargoExpiry\Extension\EmbargoExpiryExtension;
+use Terraformers\EmbargoExpiry\Job\State\ActionProcessingState;
 
 /**
  * DataObjects that have the WorkflowApplicable extension can have a
@@ -414,7 +415,7 @@ class WorkflowApplicable extends DataExtension
             return false;
         }
 
-        return $this->owner->getIsPublishJobRunning() || $this->owner->getIsUnPublishJobRunning();
+        return ActionProcessingState::singleton()->getActionIsProcessing();
     }
 
     /**
