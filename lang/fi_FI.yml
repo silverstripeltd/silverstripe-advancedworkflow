@@ -58,7 +58,6 @@ fi_FI:
   WorkflowDefinition:
     DESCRIPTION: Kuvaus
     TITLE: Otsikko
-  WorkflowEmbargoExpiryExtension:
     ActiveWorkflowStateTitle: Aktiivinen
     CompletedWorkflowStateTitle: Valmistunut
   WorkflowField:

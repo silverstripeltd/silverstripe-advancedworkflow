@@ -60,8 +60,6 @@ sv:
   WorkflowDefinition:
     DESCRIPTION: Beskrivning
     TITLE: Titel
-  WorkflowEmbargoExpiryExtension:
-    BADGE_UNPUBLISH: 'Går ut'
   WorkflowField:
     CreateLabel: Skapa
     DeleteAction: Radera
