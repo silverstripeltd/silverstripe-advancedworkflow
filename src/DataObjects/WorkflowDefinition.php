@@ -142,7 +142,7 @@ class WorkflowDefinition extends DataObject
         parent::onAfterWrite();
 
         // Request via ImportForm where TemplateVersion is already set, so unset it
-        $posted = Controller::curr()->getRequest()->postVars();
+        $posted = Controller::curr()?->getRequest()->postVars();
         if (isset($posted['_CsvFile']) && $this->TemplateVersion) {
             $this->TemplateVersion = null;
         }
