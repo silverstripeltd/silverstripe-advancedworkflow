@@ -1,2 +1,8 @@
 /node_modules/
 yarn-error.log
+vendor/
+public/
+composer.lock
+client/node_modules
+.phpunit.result.cache
+
