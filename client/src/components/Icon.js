@@ -101,6 +101,19 @@ const ICONS = Object.freeze({
   'chevron-down': {
     paths: <path d="M6 9l6 6 6-6" />,
   },
+  plus: {
+    paths: <path d="M12 5v14M5 12h14" />,
+  },
+  trash: {
+    paths: (
+      <>
+        <path d="M3 6h18" />
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+        <path d="M10 11v6M14 11v6" />
+        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      </>
+    ),
+  },
   'chevron-right': {
     paths: <path d="M9 6l6 6-6 6" />,
   },
