@@ -1,0 +1,25 @@
+---
+Name: advancedworkflow-documentation
+After:
+  - '#corecache'
+---
+# CMS user documentation feature. Opt-in — disabled by default.
+# See docs/user-documentation-plan.md.
+Symbiote\AdvancedWorkflow\Documentation\DocumentationService:
+  enabled: false
+  default_locale: en
+
+SilverStripe\Control\Director:
+  rules:
+    'documentation-admin': 'Symbiote\AdvancedWorkflow\Documentation\Control\DocumentationController'
+
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - Symbiote\AdvancedWorkflow\Documentation\Extensions\DocumentationLeftAndMainExtension
+
+# Dedicated cache pool for parsed/rendered documentation manuals.
+SilverStripe\Core\Injector\Injector:
+  Psr\SimpleCache\CacheInterface.advancedworkflowDocumentation:
+    factory: SilverStripe\Core\Cache\CacheFactory
+    constructor:
+      namespace: 'advancedworkflowDocumentation'
