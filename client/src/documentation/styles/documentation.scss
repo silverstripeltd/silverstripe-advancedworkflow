@@ -232,10 +232,10 @@ body.awf-docs-resizing { user-select: none; cursor: col-resize; }
     text-align: left;
     border: 0;
     background: none;
-    padding: 0.25rem 0;
+    padding: 0.3125rem 0;                           // 5px — breathing room
     font-family: $docs-font;
     font-size: 0.8125rem;                           // 13px child links
-    line-height: 0.90625rem;                        // 14.5px
+    line-height: 1.15;
     color: $docs-link;
     cursor: pointer;
 
@@ -243,9 +243,31 @@ body.awf-docs-resizing { user-select: none; cursor: col-resize; }
     &:focus-visible { outline: 0.125rem solid $docs-blue; outline-offset: 0.125rem; }
   }
 
+  // A page row = caret toggle + label side by side.
+  &__nav-row { display: flex; align-items: center; gap: 0.25rem; }
+
+  &__nav-toggle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: $docs-heading;
+    cursor: pointer;
+
+    &:focus-visible { outline: 0.125rem solid $docs-blue; }
+  }
+
+  &__nav-row .awf-docs__nav-link { padding-left: 0; }
+
   // Top-level section headers are bold, dark, slightly larger.
   &__nav--root > .awf-docs__nav-item > .awf-docs__nav-folder,
-  &__nav--root > .awf-docs__nav-item > .awf-docs__nav-link {
+  &__nav--root > .awf-docs__nav-item > .awf-docs__nav-link,
+  &__nav--root > .awf-docs__nav-item > .awf-docs__nav-row > .awf-docs__nav-link {
     font-weight: 700;
     font-size: 0.875rem;                            // 14px
     line-height: 1.25rem;                           // 20px
@@ -258,10 +280,35 @@ body.awf-docs-resizing { user-select: none; cursor: col-resize; }
   &__nav-link.is-active { font-weight: 700; color: $docs-blue; }
 
   &__caret {
-    width: 0.625rem;                                // ~10-12px triangle
-    height: 0.625rem;
+    width: 0.5625rem;                               // ~9px triangle
+    height: 0.5625rem;
     flex-shrink: 0;
     color: $docs-heading;
+  }
+
+  // In-page table of contents (H2/H3 under an expanded page).
+  &__toc {
+    margin: 0.25rem 0 0.375rem;
+    padding-left: 1.25rem;
+    border-left: 0.0625rem solid $docs-border-light;
+  }
+
+  &__toc-link {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: none;
+    padding: 0.28125rem 0;                          // ~4.5px
+    font-family: $docs-font;
+    font-size: 0.8125rem;                           // 13px
+    line-height: 1.2;
+    color: $docs-link;
+    cursor: pointer;
+
+    &:hover { text-decoration: underline; }
+    &:focus-visible { outline: 0.125rem solid $docs-blue; outline-offset: 0.125rem; }
+    &--h3 { padding-left: 0.75rem; color: $docs-light; }
   }
 
   // ---- Content column ----
@@ -306,11 +353,12 @@ body.awf-docs-resizing { user-select: none; cursor: col-resize; }
     line-height: 1.5;
     color: #000;
 
-    h1 { font-size: 1.5rem; color: $docs-heading; margin: 1.75rem 0 0.75rem; }
-    h2 { font-size: 1.3125rem; color: $docs-heading; margin: 1.75rem 0 0.75rem; }
-    h3 { font-size: 1.0625rem; color: $docs-heading; margin: 1.5rem 0 0.5rem; }
-    p { margin: 0 0 1.25rem; }
+    h1 { font-size: 1.5rem; color: $docs-heading; margin: 2rem 0 0.75rem; }
+    h2 { font-size: 1.3125rem; color: $docs-heading; margin: 2rem 0 0.75rem; scroll-margin-top: 1rem; }
+    h3 { font-size: 1.0625rem; color: $docs-heading; margin: 1.75rem 0 0.5rem; scroll-margin-top: 1rem; }
+    p { margin: 0 0 1.5rem; line-height: 1.6; }
     a { color: $docs-link; }
+    > :first-child { margin-top: 0; }
 
     img {
       display: block;

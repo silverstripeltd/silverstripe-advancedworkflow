@@ -24,6 +24,13 @@ class DocumentationCache
 
     private const KEY_PREFIX = 'advancedworkflow_documentation_';
 
+    /**
+     * Bump when the cached manual's SHAPE changes (new fields, processing
+     * changes) so a code change busts the cache even when the docs files —
+     * and therefore their content signature — are unchanged.
+     */
+    private const CACHE_VERSION = '2';
+
     private ?CacheInterface $cache = null;
 
     /**
@@ -64,7 +71,7 @@ class DocumentationCache
         // Only [A-Za-z0-9_.] is safe across PSR-16 backends.
         $safeLocale = preg_replace('/[^A-Za-z0-9_]/', '_', $locale) ?? 'unknown';
 
-        return self::KEY_PREFIX . $safeLocale . '_' . $signature;
+        return self::KEY_PREFIX . self::CACHE_VERSION . '_' . $safeLocale . '_' . $signature;
     }
 
     private function cache(): CacheInterface

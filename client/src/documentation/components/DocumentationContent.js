@@ -10,7 +10,7 @@ import { resolveImages } from '../lib/manual';
  * server-side, so it is safe to inject; this component resolves image
  * placeholders, intercepts internal links, and highlights search matches.
  */
-export default function DocumentationContent({ file, baseUrl, locale, query, pager, onNavigate }) {
+export default function DocumentationContent({ file, baseUrl, locale, query, heading, pager, onNavigate }) {
   const ref = useRef(null);
 
   // The page title is shown as the heading, so drop a duplicate leading H1
@@ -29,6 +29,17 @@ export default function DocumentationContent({ file, baseUrl, locale, query, pag
     container.innerHTML = html;
     highlight(container, query);
 
+    // Jump to a requested section, or reset to the top on a fresh page.
+    const scroller = container.closest('.awf-docs__main');
+    if (heading) {
+      const target = container.querySelector(`[id="${heading}"]`);
+      if (target) {
+        target.scrollIntoView({ block: 'start' });
+      }
+    } else if (scroller) {
+      scroller.scrollTop = 0;
+    }
+
     const onClick = (e) => {
       const link = e.target.closest(`[${LINK_ATTR}]`);
       if (link) {
@@ -39,7 +50,7 @@ export default function DocumentationContent({ file, baseUrl, locale, query, pag
     container.addEventListener('click', onClick);
 
     return () => container.removeEventListener('click', onClick);
-  }, [html, query, onNavigate]);
+  }, [html, query, heading, onNavigate]);
 
   if (!file) {
     return <div className="awf-docs__content awf-docs__content--empty">Select a page to read.</div>;

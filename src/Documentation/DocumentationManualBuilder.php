@@ -59,6 +59,7 @@ class DocumentationManualBuilder
                 'title' => $title,
                 'order' => $order,
                 'html' => $html,
+                'headings' => $processor->extractHeadings($html),
             ];
 
             $navFiles[] = ['relativePath' => $relative, 'title' => $title, 'order' => $order];

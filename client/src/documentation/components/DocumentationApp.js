@@ -28,6 +28,7 @@ export default function DocumentationApp() {
   const [width, setWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [navOpen, setNavOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [activeHeading, setActiveHeading] = useState(null);
 
   const close = useCallback(() => setIsOpen(false), []);
 
@@ -63,8 +64,9 @@ export default function DocumentationApp() {
     next: activeIndex >= 0 && activeIndex < files.length - 1 ? files[activeIndex + 1] : null,
   };
 
-  const navigate = useCallback((path) => {
+  const navigate = useCallback((path, heading = null) => {
     setActivePath(path);
+    setActiveHeading(heading);
     setQuery('');
     setSearchOpen(false);
   }, []);
@@ -130,6 +132,7 @@ export default function DocumentationApp() {
                 activePath={activePath}
                 onSelect={navigate}
                 emptyLabel={matchingPaths ? 'No matches' : ''}
+                files={manual.files}
                 root
               />
             </div>
@@ -147,6 +150,7 @@ export default function DocumentationApp() {
               baseUrl={baseUrl}
               locale={manual.locale}
               query={query}
+              heading={activeHeading}
               pager={pager}
               onNavigate={navigate}
             />

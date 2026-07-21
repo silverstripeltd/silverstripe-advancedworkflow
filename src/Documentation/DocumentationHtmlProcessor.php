@@ -59,7 +59,64 @@ class DocumentationHtmlProcessor
             $this->processLink($anchor, $currentDir);
         }
 
+        $this->assignHeadingIds($dom);
+
         return $this->innerHtml($dom);
+    }
+
+    /**
+     * Give each section heading a stable slug id so the navigation can link to
+     * it (the panel's in-page table of contents) and internal anchors resolve.
+     */
+    private function assignHeadingIds(DOMDocument $dom): void
+    {
+        $used = [];
+
+        foreach (['h2', 'h3'] as $tag) {
+            foreach ($dom->getElementsByTagName($tag) as $heading) {
+                if ($heading->getAttribute('id') !== '') {
+                    continue;
+                }
+                $heading->setAttribute('id', $this->uniqueSlug($heading->textContent, $used));
+            }
+        }
+    }
+
+    /**
+     * Extract the H2/H3 headings (with their slug ids) from processed HTML, so
+     * the navigation can offer a per-page table of contents.
+     *
+     * @return array<int, array{id: string, text: string, level: int}>
+     */
+    public function extractHeadings(string $html): array
+    {
+        if (!preg_match_all('/<h([23])\s[^>]*id="([^"]+)"[^>]*>(.*?)<\/h\1>/is', $html, $matches, PREG_SET_ORDER)) {
+            return [];
+        }
+
+        return array_map(static fn ($m) => [
+            'id' => $m[2],
+            'text' => trim(html_entity_decode(strip_tags($m[3]), ENT_QUOTES | ENT_HTML5, 'UTF-8')),
+            'level' => (int) $m[1],
+        ], $matches);
+    }
+
+    /**
+     * @param array<string, bool> $used
+     */
+    private function uniqueSlug(string $text, array &$used): string
+    {
+        $base = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $text) ?? '', '-')) ?: 'section';
+        $slug = $base;
+        $n = 2;
+
+        while (isset($used[$slug])) {
+            $slug = $base . '-' . $n++;
+        }
+
+        $used[$slug] = true;
+
+        return $slug;
     }
 
     private function processImage(DOMElement $img, string $currentDir): void

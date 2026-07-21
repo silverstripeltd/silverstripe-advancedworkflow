@@ -58,6 +58,37 @@ describe('NavigationTree', () => {
   });
 });
 
+describe('NavigationTree accordion (page headings)', () => {
+  const files = {
+    'index.md': { headings: [{ id: 'intro', text: 'Intro', level: 2 }, { id: 'setup', text: 'Setup', level: 2 }] },
+  };
+  const pages = [{ type: 'file', title: 'Overview', path: 'index.md', order: 0 }];
+
+  it('expands a page to its headings and navigates to a heading', () => {
+    const onSelect = jest.fn();
+    const { container } = render(
+      <NavigationTree nodes={pages} activePath={null} onSelect={onSelect} emptyLabel="" files={files} />
+    );
+
+    expect(container.textContent).not.toContain('Intro');
+    act(() => container.querySelector('.awf-docs__nav-toggle').dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(container.textContent).toContain('Intro');
+
+    const toc = [...container.querySelectorAll('.awf-docs__toc-link')].find((b) => b.textContent === 'Setup');
+    act(() => toc.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(onSelect).toHaveBeenCalledWith('index.md', 'setup');
+  });
+
+  it('selects the page when its label is clicked', () => {
+    const onSelect = jest.fn();
+    const { container } = render(
+      <NavigationTree nodes={pages} activePath={null} onSelect={onSelect} emptyLabel="" files={files} />
+    );
+    act(() => container.querySelector('.awf-docs__nav-link').dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(onSelect).toHaveBeenCalledWith('index.md');
+  });
+});
+
 describe('SearchBox', () => {
   it('reports input changes', () => {
     const onChange = jest.fn();

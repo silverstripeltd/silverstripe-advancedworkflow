@@ -68,4 +68,25 @@ class DocumentationHtmlProcessorTest extends SapphireTest
         $this->assertStringNotContainsString('data-doc-path', $out);
         $this->assertStringContainsString('href="#section"', $out);
     }
+
+    public function testAssignsHeadingSlugIdsAndExtractsThem(): void
+    {
+        $out = $this->processor->process('<h2>Before we begin</h2><p>x</p><h3>Sub Section</h3>', 'index.md');
+
+        $this->assertStringContainsString('<h2 id="before-we-begin">', $out);
+        $this->assertStringContainsString('<h3 id="sub-section">', $out);
+
+        $this->assertSame([
+            ['id' => 'before-we-begin', 'text' => 'Before we begin', 'level' => 2],
+            ['id' => 'sub-section', 'text' => 'Sub Section', 'level' => 3],
+        ], $this->processor->extractHeadings($out));
+    }
+
+    public function testHeadingSlugsAreDeduplicated(): void
+    {
+        $out = $this->processor->process('<h2>Setup</h2><h2>Setup</h2>', 'index.md');
+
+        $this->assertStringContainsString('id="setup"', $out);
+        $this->assertStringContainsString('id="setup-2"', $out);
+    }
 }
