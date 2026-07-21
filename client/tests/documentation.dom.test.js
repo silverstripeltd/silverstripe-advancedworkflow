@@ -103,6 +103,20 @@ describe('SearchBox', () => {
 
     expect(onChange).toHaveBeenCalledWith('approval');
   });
+
+  it('renders a close button that fires onClose', () => {
+    const onClose = jest.fn();
+    const { container } = render(<SearchBox value="" onChange={jest.fn()} onClose={onClose} />);
+    const close = container.querySelector('.awf-docs__search-close');
+    expect(close).not.toBeNull();
+    act(() => close.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('omits the close button when no onClose is given', () => {
+    const { container } = render(<SearchBox value="" onChange={jest.fn()} />);
+    expect(container.querySelector('.awf-docs__search-close')).toBeNull();
+  });
 });
 
 describe('DocumentationContent', () => {

@@ -71,10 +71,18 @@ export default function DocumentationApp() {
     setSearchOpen(false);
   }, []);
 
-  const openSearch = useCallback(() => {
+  // The search icon toggles the search bar open/closed.
+  const toggleSearch = useCallback(() => {
     setNavOpen(true);
-    setSearchOpen(true);
+    setSearchOpen((open) => !open);
   }, []);
+
+  // Closing the search always clears the query so the nav filter resets.
+  useEffect(() => {
+    if (!searchOpen) {
+      setQuery('');
+    }
+  }, [searchOpen]);
 
   return (
     <Offcanvas
@@ -97,7 +105,7 @@ export default function DocumentationApp() {
             className={`awf-docs__rail-btn ${searchOpen ? 'is-active' : ''}`}
             aria-label="Search documentation"
             aria-pressed={searchOpen}
-            onClick={openSearch}
+            onClick={toggleSearch}
           >
             <DocIcon name="search" />
           </button>
@@ -120,12 +128,12 @@ export default function DocumentationApp() {
                 type="button"
                 className="awf-docs__nav-search-btn"
                 aria-label="Search documentation"
-                onClick={openSearch}
+                onClick={toggleSearch}
               >
                 <DocIcon name="search" />
               </button>
             </div>
-            {searchOpen && <SearchBox value={query} onChange={setQuery} />}
+            {searchOpen && <SearchBox value={query} onChange={setQuery} onClose={() => setSearchOpen(false)} />}
             <div className="awf-docs__nav-scroll">
               <NavigationTree
                 nodes={navigation}
