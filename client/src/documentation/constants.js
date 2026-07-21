@@ -3,8 +3,8 @@
 export const TOGGLE_EVENT = 'awf-docs:toggle';
 
 export const MIN_PANEL_WIDTH = 480;
-export const MAX_PANEL_WIDTH = 1100;
-export const DEFAULT_PANEL_WIDTH = 820;
+export const MAX_PANEL_WIDTH = 1400;
+export const DEFAULT_PANEL_WIDTH = 1120;
 
 // Static labels from the Figma design (nav header + content eyebrow).
 export const NAV_TITLE = 'User docs';

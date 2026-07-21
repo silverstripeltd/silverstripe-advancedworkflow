@@ -340,7 +340,9 @@ body.awf-docs-resizing { user-select: none; cursor: col-resize; }
 
   &__doc {
     width: 100%;
-    max-width: 40.625rem;                           // 650px
+    // Fixed layout dimension in px (like the panel width): the CMS admin uses a
+    // 13px root, so a rem value here would not resolve to the intended pixels.
+    max-width: 770px;
     padding: 3.125rem 2.5rem 3.125rem;              // pt 50, px 40
   }
 
