@@ -1,16 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Offcanvas, OffcanvasBody } from 'reactstrap';
+import { Offcanvas } from 'reactstrap';
+import DocIcon from './DocIcon';
 import NavigationTree from './NavigationTree';
 import SearchBox from './SearchBox';
 import DocumentationContent from './DocumentationContent';
-import { getConfig, TOGGLE_EVENT, MIN_PANEL_WIDTH, MAX_PANEL_WIDTH, DEFAULT_PANEL_WIDTH } from '../constants';
+import {
+  getConfig, TOGGLE_EVENT, NAV_TITLE,
+  MIN_PANEL_WIDTH, MAX_PANEL_WIDTH, DEFAULT_PANEL_WIDTH,
+} from '../constants';
 import { fetchManual, flattenFiles, searchPaths, filterNavigation } from '../lib/manual';
 
 /**
- * The documentation panel: a resizable, right-hand slide-in (reactstrap
- * Offcanvas) with a search + navigation column and a content column. Opens in
- * response to the toolbar button's toggle event; the manual is fetched lazily
- * on first open and then cached in state.
+ * The documentation panel, laid out to match the Figma design: a narrow icon
+ * rail (search + navigation toggle), a collapsible "User docs" navigation
+ * column, and a centred content column. It is a resizable right-hand slide-in
+ * (reactstrap Offcanvas) opened by the toolbar button's toggle event; the
+ * manual is fetched lazily on first open and cached in state.
  */
 export default function DocumentationApp() {
   const { baseUrl } = getConfig();
@@ -21,17 +26,17 @@ export default function DocumentationApp() {
   const [activePath, setActivePath] = useState(null);
   const [query, setQuery] = useState('');
   const [width, setWidth] = useState(DEFAULT_PANEL_WIDTH);
+  const [navOpen, setNavOpen] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const close = useCallback(() => setIsOpen(false), []);
 
-  // Toolbar button toggles the panel via a decoupled DOM event.
   useEffect(() => {
     const toggle = () => setIsOpen((open) => !open);
     document.addEventListener(TOGGLE_EVENT, toggle);
     return () => document.removeEventListener(TOGGLE_EVENT, toggle);
   }, []);
 
-  // Lazily load the manual the first time the panel opens.
   useEffect(() => {
     if (!isOpen || status !== 'idle') {
       return;
@@ -61,6 +66,12 @@ export default function DocumentationApp() {
   const navigate = useCallback((path) => {
     setActivePath(path);
     setQuery('');
+    setSearchOpen(false);
+  }, []);
+
+  const openSearch = useCallback(() => {
+    setNavOpen(true);
+    setSearchOpen(true);
   }, []);
 
   return (
@@ -73,29 +84,64 @@ export default function DocumentationApp() {
       aria-label="Documentation"
     >
       <ResizeHandle width={width} setWidth={setWidth} />
-      <div className="awf-docs__header">
-        <span className="awf-docs__eyebrow">Documentation</span>
-        <button type="button" className="awf-docs__close" aria-label="Close documentation" onClick={close}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <OffcanvasBody className="awf-docs__body">
-        {status === 'loading' && <p className="awf-docs__status">Loading documentation…</p>}
-        {status === 'error' && <p className="awf-docs__status awf-docs__status--error">Documentation could not be loaded.</p>}
-        {status === 'ready' && manual && (
-          <div className="awf-docs__layout">
-            <aside className="awf-docs__sidebar">
-              <SearchBox value={query} onChange={setQuery} />
+      <button type="button" className="awf-docs__close" aria-label="Close documentation" onClick={close}>
+        <DocIcon name="close" />
+      </button>
+
+      <div className="awf-docs__shell">
+        <div className="awf-docs__rail">
+          <button
+            type="button"
+            className={`awf-docs__rail-btn ${searchOpen ? 'is-active' : ''}`}
+            aria-label="Search documentation"
+            aria-pressed={searchOpen}
+            onClick={openSearch}
+          >
+            <DocIcon name="search" />
+          </button>
+          <button
+            type="button"
+            className={`awf-docs__rail-btn ${navOpen ? 'is-active' : ''}`}
+            aria-label="Toggle navigation"
+            aria-pressed={navOpen}
+            onClick={() => setNavOpen((v) => !v)}
+          >
+            <DocIcon name="list" />
+          </button>
+        </div>
+
+        {navOpen && status === 'ready' && (
+          <aside className="awf-docs__nav-col">
+            <div className="awf-docs__nav-head">
+              <span className="awf-docs__nav-title">{NAV_TITLE}</span>
+              <button
+                type="button"
+                className="awf-docs__nav-search-btn"
+                aria-label="Search documentation"
+                onClick={openSearch}
+              >
+                <DocIcon name="search" />
+              </button>
+            </div>
+            {searchOpen && <SearchBox value={query} onChange={setQuery} />}
+            <div className="awf-docs__nav-scroll">
               <NavigationTree
                 nodes={navigation}
                 activePath={activePath}
                 onSelect={navigate}
                 emptyLabel={matchingPaths ? 'No matches' : ''}
+                root
               />
-            </aside>
+            </div>
+          </aside>
+        )}
+
+        <div className="awf-docs__main">
+          {status === 'loading' && <p className="awf-docs__status">Loading documentation…</p>}
+          {status === 'error' && (
+            <p className="awf-docs__status awf-docs__status--error">Documentation could not be loaded.</p>
+          )}
+          {status === 'ready' && (
             <DocumentationContent
               file={activeFile}
               baseUrl={baseUrl}
@@ -104,15 +150,15 @@ export default function DocumentationApp() {
               pager={pager}
               onNavigate={navigate}
             />
-          </div>
-        )}
-      </OffcanvasBody>
+          )}
+        </div>
+      </div>
     </Offcanvas>
   );
 }
 
 /**
- * A drag handle on the panel's left edge that resizes its width (clamped).
+ * Drag handle on the panel's left edge to resize its width (clamped).
  */
 function ResizeHandle({ width, setWidth }) {
   const startRef = useRef({ x: 0, width });
@@ -121,7 +167,6 @@ function ResizeHandle({ width, setWidth }) {
     startRef.current = { x: e.clientX, width };
 
     const onMove = (move) => {
-      // Dragging left (smaller clientX) widens a right-anchored panel.
       const delta = startRef.current.x - move.clientX;
       const next = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, startRef.current.width + delta));
       setWidth(next);

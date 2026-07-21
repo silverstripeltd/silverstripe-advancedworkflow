@@ -1,17 +1,22 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { LINK_ATTR } from '../constants';
+import DocIcon from './DocIcon';
+import { LINK_ATTR, PANEL_EYEBROW } from '../constants';
 import { resolveImages } from '../lib/manual';
 
 /**
- * Renders one documentation page. The HTML was sanitised server-side, so it is
- * safe to inject; this component resolves image placeholders, intercepts
- * internal links to navigate within the panel, and highlights search matches.
+ * Renders one documentation page to match the Figma content column: a centred
+ * 650px column with an eyebrow (info icon + section label), a large page title,
+ * the rendered body, and a previous/next pager. The body HTML was sanitised
+ * server-side, so it is safe to inject; this component resolves image
+ * placeholders, intercepts internal links, and highlights search matches.
  */
 export default function DocumentationContent({ file, baseUrl, locale, query, pager, onNavigate }) {
   const ref = useRef(null);
 
+  // The page title is shown as the heading, so drop a duplicate leading H1
+  // from the body, then resolve image placeholders to real endpoint URLs.
   const html = useMemo(
-    () => (file ? resolveImages(file.html, baseUrl, locale) : ''),
+    () => (file ? resolveImages(stripLeadingHeading(file.html), baseUrl, locale) : ''),
     [file, baseUrl, locale]
   );
 
@@ -21,7 +26,6 @@ export default function DocumentationContent({ file, baseUrl, locale, query, pag
       return undefined;
     }
 
-    // Rebuild from the source HTML each pass so stale highlights never stack.
     container.innerHTML = html;
     highlight(container, query);
 
@@ -33,7 +37,6 @@ export default function DocumentationContent({ file, baseUrl, locale, query, pag
       }
     };
     container.addEventListener('click', onClick);
-    container.scrollTop = 0;
 
     return () => container.removeEventListener('click', onClick);
   }, [html, query, onNavigate]);
@@ -44,28 +47,47 @@ export default function DocumentationContent({ file, baseUrl, locale, query, pag
 
   return (
     <div className="awf-docs__content">
-      <article className="awf-docs__article" ref={ref} />
-      <nav className="awf-docs__pager" aria-label="Documentation pages">
-        {pager.prev ? (
-          <button type="button" className="awf-docs__pager-link awf-docs__pager-link--prev" onClick={() => onNavigate(pager.prev.path)}>
-            <span className="awf-docs__pager-label">Previous</span>
-            <span className="awf-docs__pager-title">{pager.prev.title}</span>
-          </button>
-        ) : <span />}
-        {pager.next && (
-          <button type="button" className="awf-docs__pager-link awf-docs__pager-link--next" onClick={() => onNavigate(pager.next.path)}>
-            <span className="awf-docs__pager-label">Next</span>
-            <span className="awf-docs__pager-title">{pager.next.title}</span>
-          </button>
-        )}
-      </nav>
+      <div className="awf-docs__doc">
+        <header className="awf-docs__doc-header">
+          <span className="awf-docs__eyebrow">
+            <DocIcon name="info" className="awf-docs__eyebrow-icon" />
+            {PANEL_EYEBROW}
+          </span>
+          <h1 className="awf-docs__doc-title">{file.title}</h1>
+        </header>
+
+        <article className="awf-docs__article" ref={ref} />
+
+        <nav className="awf-docs__pager" aria-label="Documentation pages">
+          {pager.prev ? (
+            <button type="button" className="awf-docs__pager-link awf-docs__pager-link--prev" onClick={() => onNavigate(pager.prev.path)}>
+              <span className="awf-docs__pager-label">Previous</span>
+              <span className="awf-docs__pager-title">{pager.prev.title}</span>
+            </button>
+          ) : <span />}
+          {pager.next && (
+            <button type="button" className="awf-docs__pager-link awf-docs__pager-link--next" onClick={() => onNavigate(pager.next.path)}>
+              <span className="awf-docs__pager-label">Next</span>
+              <span className="awf-docs__pager-title">{pager.next.title}</span>
+            </button>
+          )}
+        </nav>
+      </div>
     </div>
   );
 }
 
 /**
- * Wrap case-insensitive matches of `query` in <mark> across the container's
- * text nodes, skipping code blocks so snippets stay intact.
+ * Remove a leading H1 (the page's own title) so it is not shown twice — the
+ * title is rendered from metadata in the header.
+ */
+function stripLeadingHeading(html) {
+  return (html || '').replace(/^\s*<h1[^>]*>.*?<\/h1>\s*/is, '');
+}
+
+/**
+ * Wrap case-insensitive matches of `query` in <mark> across text nodes,
+ * skipping code blocks so snippets stay intact.
  */
 function highlight(container, query) {
   const term = (query || '').trim();
