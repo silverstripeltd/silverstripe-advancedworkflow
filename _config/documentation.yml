@@ -1,25 +1,18 @@
 ---
 Name: advancedworkflow-documentation
 After:
-  - '#corecache'
+  - '#cms-documentation'
 ---
-# CMS user documentation feature. Opt-in — disabled by default.
-# See docs/user-documentation-plan.md.
-Symbiote\AdvancedWorkflow\Documentation\DocumentationService:
-  enabled: false
-  default_locale: en
-
-SilverStripe\Control\Director:
-  rules:
-    'documentation-admin': 'Symbiote\AdvancedWorkflow\Documentation\Control\DocumentationController'
-
-SilverStripe\Admin\LeftAndMain:
-  extensions:
-    - Symbiote\AdvancedWorkflow\Documentation\Extensions\DocumentationLeftAndMainExtension
-
-# Dedicated cache pool for parsed/rendered documentation manuals.
-SilverStripe\Core\Injector\Injector:
-  Psr\SimpleCache\CacheInterface.advancedworkflowDocumentation:
-    factory: SilverStripe\Core\Cache\CacheFactory
-    constructor:
-      namespace: 'advancedworkflowDocumentation'
+# The CMS user documentation feature lives in the extracted module
+# silverstripeltd/silverstripe-cms-documentation. Here we only point it at this
+# module's user guide (docs/en/userguide) and scope the Docs button to the
+# Workflows admin section. The feature stays disabled by default — enable it in
+# your project config:
+#
+#   Silverstripe\CmsDocumentation\DocumentationService:
+#     enabled: true
+#
+Silverstripe\CmsDocumentation\DocumentationService:
+  module_name: 'symbiote/silverstripe-advancedworkflow'
+  visible_paths:
+    - 'admin/workflows'
