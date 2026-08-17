@@ -29,11 +29,8 @@
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../silverstripe-cms-documentation",
-            "options": {
-                "symlink": true
-            }
+          "type": "git",
+          "url": "git@github.com:silverstripeltd/silverstripe-cms-documentation.git"
         }
     ],
     "require-dev": {

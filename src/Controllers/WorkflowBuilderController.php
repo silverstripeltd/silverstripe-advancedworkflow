@@ -100,15 +100,19 @@ class WorkflowBuilderController extends Controller
             return $this->jsonResponse(['error' => 'Missing ID or ClassName'], 400);
         }
 
+        if (!$this->isTargetClass($className)) {
+            return $this->jsonResponse(['error' => 'Unknown ClassName'], 400);
+        }
+
         $service = Injector::inst()->get(WorkflowStatusService::class);
         $data = $service->getStatusForTarget($recordId, $className);
 
         if ($data === null) {
             // No active workflow — return available definitions for starting
-            $record = Versioned::get_by_stage($className, Versioned::DRAFT)->byID($recordId);
+            $record = $this->findTargetRecord($className, $recordId);
             $availableDefinitions = [];
 
-            if ($record instanceof DataObject && $record->exists()) {
+            if ($record instanceof DataObject) {
                 $workflowService = Injector::inst()->get(WorkflowService::class);
                 $definitions = $workflowService->getDefinitionsFor($record);
 
@@ -249,9 +253,13 @@ class WorkflowBuilderController extends Controller
             return $this->jsonResponse(['error' => 'Missing RecordID or ClassName'], 400);
         }
 
-        $record = Versioned::get_by_stage($className, Versioned::DRAFT)->byID($recordId);
+        if (!$this->isTargetClass($className)) {
+            return $this->jsonResponse(['error' => 'Unknown ClassName'], 400);
+        }
 
-        if (!$record || !$record->exists()) {
+        $record = $this->findTargetRecord($className, $recordId);
+
+        if (!$record instanceof DataObject) {
             return $this->jsonResponse(['error' => 'Record not found'], 404);
         }
 
@@ -265,6 +273,29 @@ class WorkflowBuilderController extends Controller
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * A ClassName supplied by the client is untrusted — reject anything that is
+     * not a real DataObject subclass before it reaches the ORM, which fatals on
+     * unknown class strings.
+     */
+    private function isTargetClass(string $className): bool
+    {
+        return is_subclass_of($className, DataObject::class, true);
+    }
+
+    /**
+     * Resolve a target record, reading from the draft stage for versioned
+     * classes. Returns null when the record does not exist.
+     */
+    private function findTargetRecord(string $className, int $recordId): ?DataObject
+    {
+        $record = DataObject::has_extension($className, Versioned::class)
+            ? Versioned::get_by_stage($className, Versioned::DRAFT)->byID($recordId)
+            : DataObject::get($className)->byID($recordId);
+
+        return $record instanceof DataObject && $record->exists() ? $record : null;
     }
 
     private function jsonResponse(mixed $data, int $status = 200): HTTPResponse

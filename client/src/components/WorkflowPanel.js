@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import WorkflowStatusBar from './WorkflowStatusBar';
 import WorkflowDetailPanel from './WorkflowDetailPanel';
 import Icon from './Icon';
+import { classifyWorkflowResponse, RESPONSE_NOT_APPLICABLE, RESPONSE_OK } from '../lib/workflowResponse';
 import '../styles/workflow.scss';
 
 const API_BASE = '/workflow-admin';
@@ -14,10 +15,16 @@ const WorkflowPanel = ({ recordID, className }) => {
   const [actionLoading, setActionLoading] = useState(false);
 
   const load = useCallback(() => {
+    const query = `ID=${encodeURIComponent(recordID)}&ClassName=${encodeURIComponent(className)}`;
+
     setLoading(true);
-    fetch(`${API_BASE}/workflowData?ID=${recordID}&ClassName=${className}`)
+    fetch(`${API_BASE}/workflowData?${query}`, { credentials: 'same-origin' })
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to load workflow data');
+        const outcome = classifyWorkflowResponse(res.status);
+
+        if (outcome === RESPONSE_NOT_APPLICABLE) return null;
+        if (outcome !== RESPONSE_OK) throw new Error(`Failed to load workflow data (${res.status})`);
+
         return res.json();
       })
       .then((result) => {
