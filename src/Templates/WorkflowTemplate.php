@@ -70,6 +70,8 @@ use Symbiote\AdvancedWorkflow\DataObjects\WorkflowTransition;
  */
 class WorkflowTemplate
 {
+    // These are loosely typed to allow for easy conversion from YAML and backwards compatibility
+    // e.g. version is likely to be an int, though the DB column it goes into is a Varchar
     protected $name;
     protected $description;
     protected $version;
@@ -92,29 +94,29 @@ class WorkflowTemplate
         $this->sort = $sort;
     }
 
-    public function getName()
+    public function getName(): string
     {
-        return $this->name;
+        return (string) $this->name;
     }
 
-    public function getVersion()
+    public function getVersion(): string
     {
-        return $this->version;
+        return (string) $this->version;
     }
 
-    public function getDescription()
+    public function getDescription(): string
     {
-        return $this->description;
+        return (string) $this->description;
     }
 
-    public function getRemindDays()
+    public function getRemindDays(): int
     {
-        return $this->remindDays;
+        return (int) $this->remindDays;
     }
 
-    public function getSort()
+    public function getSort(): int
     {
-        return $this->sort;
+        return (int) $this->sort;
     }
 
     /**
@@ -188,7 +190,7 @@ class WorkflowTemplate
      * @return WorkflowAction
      * @throws Exception
      */
-    protected function createAction($name, $actionTemplate, WorkflowDefinition $definition = null)
+    protected function createAction($name, $actionTemplate, ?WorkflowDefinition $definition = null)
     {
         $type = $actionTemplate['type'];
         if (!$type || !class_exists($type ?? '')) {
@@ -418,7 +420,7 @@ class WorkflowTemplate
             if (isset($source['users']) && is_array($source['users'])) {
                 foreach ($source['users'] as $user) {
                     $email = Convert::raw2sql($user['email']);
-                    if ($_user = DataObject::get_one(Member::class, "Email = '".$email."'")) {
+                    if ($_user = Member::get()->setUseCache(true)->find('Email', $email)) {
                         $object->Users()->add($_user);
                     }
                 }
@@ -434,7 +436,7 @@ class WorkflowTemplate
             if (isset($source['groups']) && is_array($source['groups'])) {
                 foreach ($source['groups'] as $group) {
                     $title = Convert::raw2sql($group['title']);
-                    if ($_group = DataObject::get_one(Group::class, "Title = '".$title."'")) {
+                    if ($_group = Group::get()->setUseCache(true)->find('Title', $title)) {
                         $object->Groups()->add($_group);
                     }
                 }

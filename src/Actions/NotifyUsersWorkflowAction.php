@@ -2,7 +2,9 @@
 
 namespace Symbiote\AdvancedWorkflow\Actions;
 
+use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Email\Email;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\HeaderField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\TextareaField;
@@ -13,11 +15,12 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
-use SilverStripe\View\ArrayData;
-use SilverStripe\View\SSViewer;
-use Swift_RfcComplianceException;
+use SilverStripe\Model\ArrayData;
+use SilverStripe\View\TemplateEngine;
+use SilverStripe\View\ViewLayerData;
 use Symbiote\AdvancedWorkflow\DataObjects\WorkflowAction;
 use Symbiote\AdvancedWorkflow\DataObjects\WorkflowInstance;
+use Symfony\Component\Mime\Exception\RfcComplianceException;
 
 /**
  * A workflow action that notifies users attached to the workflow path that they have a task awaiting them.
@@ -84,9 +87,21 @@ class NotifyUsersWorkflowAction extends WorkflowAction
 
     public function execute(WorkflowInstance $workflow)
     {
+        if (!$this->EmailTemplate) {
+            Injector::inst()->get(LoggerInterface::class)->warning(
+                'No email template available for notify users workflow action '
+                . "'{$this->Title}' in workflow '{$this->WorkflowDef()?->Title}'."
+            );
+            return true;
+        }
+
         $members = $workflow->getAssignedMembers();
 
         if (!$members || !count($members ?? [])) {
+            Injector::inst()->get(LoggerInterface::class)->warning(
+                'No members to send emails to for notify users workflow action '
+                . "'{$this->Title}' in workflow '{$this->WorkflowDef()?->Title}'."
+            );
             return true;
         }
 
@@ -134,10 +149,8 @@ class NotifyUsersWorkflowAction extends WorkflowAction
             ]);
         }
 
-
-        $view = SSViewer::fromString($this->EmailTemplate);
-        $this->extend('updateView', $view);
-
+        $engine = Injector::inst()->create(TemplateEngine::class);
+        $emailSent = false;
         foreach ($members as $member) {
             if ($member->Email) {
                 // We bind in the assignee at this point, as it changes each loop iteration
@@ -146,21 +159,31 @@ class NotifyUsersWorkflowAction extends WorkflowAction
                     $item->Assignee = ArrayData::create($assigneeVars);
                 }
 
-                $body = $view->process($item);
+                $body = $engine->renderString($this->EmailTemplate, ViewLayerData::create($item));
 
                 $email = Email::create();
                 try {
                     $email->setTo($member->Email);
-                } catch (Swift_RfcComplianceException $exception) {
+                } catch (RfcComplianceException) {
                     // If the email address isn't valid we should skip it rather than break
                     // the rest of the processing
                     continue;
                 }
                 $email->setSubject($subject);
-                $email->setFrom($from);
+                if ($from) {
+                    $email->setFrom($from);
+                }
                 $email->setBody($body);
                 $email->send();
+                $emailSent = true;
             }
+        }
+
+        if (!$emailSent) {
+            Injector::inst()->get(LoggerInterface::class)->warning(
+                'No email was sent for notify users workflow action '
+                . "'{$this->Title}' in workflow '{$this->WorkflowDef()?->Title}'."
+            );
         }
 
         return true;
@@ -185,7 +208,7 @@ class NotifyUsersWorkflowAction extends WorkflowAction
         }
 
         if ($target instanceof CMSPreviewable) {
-            $result['CMSLink'] = $target->CMSEditLink();
+            $result['CMSLink'] = $target->getCMSEditLink();
         } elseif ($target->hasMethod('WorkflowLink')) {
             $result['CMSLink'] = $target->WorkflowLink();
         }
@@ -207,7 +230,7 @@ class NotifyUsersWorkflowAction extends WorkflowAction
      * @param Member $member An optional member to use. If null, will use the current logged in member
      * @return array
      */
-    public function getMemberFields(Member $member = null)
+    public function getMemberFields(?Member $member = null)
     {
         if (!$member) {
             $member = Security::getCurrentUser();

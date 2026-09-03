@@ -12,7 +12,7 @@ use SilverStripe\Forms\GridField\GridField_ColumnProvider;
 use SilverStripe\Forms\GridField\GridField_FormAction;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Permission;
-use SilverStripe\View\ArrayData;
+use SilverStripe\Model\ArrayData;
 use SilverStripe\View\SSViewer;
 use Symbiote\AdvancedWorkflow\Admin\AdvancedWorkflowAdmin;
 
@@ -110,7 +110,8 @@ class GridFieldExportAction extends AbstractGridFieldComponent implements
             "exportrecord",
             array('RecordID' => $record->ID)
         )
-            ->addExtraClass('btn btn--no-text btn--icon-md font-icon-export');
+            ->setIcon('export')
+            ->addExtraClass('btn btn--no-text btn--icon-md');
 
         $segment1 = Director::baseURL();
         $segment2 = Config::inst()->get(AdvancedWorkflowAdmin::class, 'url_segment');

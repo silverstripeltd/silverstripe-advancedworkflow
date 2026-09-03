@@ -32,19 +32,19 @@ class AdvancedWorkflowActionController extends Controller
         }
 
         $id = $this->request->requestVar('id');
-        $transition = $this->request->requestVar('transition');
+        $transitionID = (int) $this->request->requestVar('transition');
 
-        $instance = DataObject::get_by_id(WorkflowInstance::class, (int) $id);
+        $instance = WorkflowInstance::get()->setUseCache(true)->byID((int) $id);
         if ($instance && $instance->canEdit()) {
-            $transition = DataObject::get_by_id(WorkflowTransition::class, (int) $transition);
-            if ($transition) {
+            $transitionExists = WorkflowTransition::get()->setUseCache(true)->filter('ID', $transitionID)->exists();
+            if ($transitionExists) {
                 if ($this->request->requestVar('comments')) {
                     $action = $instance->CurrentAction();
                     $action->Comment = $this->request->requestVar('comments');
                     $action->write();
                 }
 
-                singleton(WorkflowService::class)->executeTransition($instance->getTarget(), $transition->ID);
+                singleton(WorkflowService::class)->executeTransition($instance->getTarget(), $transitionID);
                 $result = array(
                     'success' => true,
                     'link'    => $instance->getTarget()->AbsoluteLink()

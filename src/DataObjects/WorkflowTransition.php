@@ -8,7 +8,7 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TabSet;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\TreeMultiselectField;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 use SilverStripe\ORM\ManyManyList;
@@ -16,7 +16,7 @@ use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\Security;
-use Symbiote\AdvancedWorkflow\Forms\AWRequiredFields;
+use Symbiote\AdvancedWorkflow\Forms\AWRequiredFieldsValidator;
 
 /**
  * A workflow transition.
@@ -109,7 +109,7 @@ class WorkflowTransition extends DataObject
         $attachTo = $this->ActionID ? $this->ActionID : $reqParent;
 
         if ($attachTo) {
-            $action = DataObject::get_by_id(WorkflowAction::class, $attachTo);
+            $action = WorkflowAction::get()->setUseCache(true)->byID($attachTo);
             if ($action && $action->ID) {
                 $filter = '"WorkflowDefID" = '.((int) $action->WorkflowDefID);
             }
@@ -177,7 +177,7 @@ class WorkflowTransition extends DataObject
 
     public function getValidator()
     {
-        $required = new AWRequiredFields('Title', 'ActionID', 'NextActionID');
+        $required = new AWRequiredFieldsValidator('Title', 'ActionID', 'NextActionID');
         $required->setCaller($this);
         return $required;
     }
@@ -207,7 +207,7 @@ class WorkflowTransition extends DataObject
 
         // If not admin, check if the member is in the list of assigned members
         if (!Permission::check('ADMIN') && $members->exists()) {
-            if (!$members->find('ID', Security::getCurrentUser()->ID)) {
+            if (!$members->filter('ID', Security::getCurrentUser()->ID)->exists()) {
                 $return = false;
             }
         }
@@ -275,7 +275,7 @@ class WorkflowTransition extends DataObject
      *
      * @param array $data
      * @return array
-     * @see {@link AWRequiredFields}
+     * @see {@link AWRequiredFieldsValidator}
      */
     public function extendedRequiredFieldsNotSame($data = null)
     {

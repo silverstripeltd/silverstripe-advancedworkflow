@@ -16,7 +16,7 @@ use SilverStripe\Forms\GridField\GridFieldEditButton;
 use SilverStripe\Forms\GridField\GridFieldExportButton;
 use SilverStripe\Forms\GridField\GridFieldImportButton;
 use SilverStripe\Forms\GridField\GridFieldPaginator;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Member;
@@ -275,7 +275,7 @@ class AdvancedWorkflowAdmin extends ModelAdmin
             }
             // @todo can we use $this->getDefinitionFor() to fetch the "Parent" definition of $instance? Maybe
             // define $this->workflowParent()
-            $effectiveWorkflow = DataObject::get_by_id(WorkflowDefinition::class, $instance->DefinitionID);
+            $effectiveWorkflow = WorkflowDefinition::get()->setUseCache(true)->byID($instance->DefinitionID);
             $target = $instance->getTarget();
             if (!is_object($effectiveWorkflow) || !$target) {
                 continue;
@@ -286,9 +286,7 @@ class AdvancedWorkflowAdmin extends ModelAdmin
             // Title property..
             $instance->setField('Title', $target->getField('Title'));
             $instance->setField('LastEdited', $target->getField('LastEdited'));
-            if (method_exists($target, 'CMSEditLink')) {
-                $instance->setField('ObjectRecordLink', $target->CMSEditLink());
-            }
+            $instance->setField('ObjectRecordLink', $target->getCMSEditLink());
 
             $list->push($instance);
         }

@@ -17,7 +17,7 @@ use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TabSet;
 use SilverStripe\ORM\CMSPreviewable;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\ManyManyList;
@@ -41,9 +41,9 @@ use Symbiote\QueuedJobs\Services\AbstractQueuedJob;
  * @method WorkflowDefinition WorkflowDefinition()
  * @method ManyManyList<WorkflowDefinition> AdditionalWorkflowDefinitions()
  *
- * @extends DataExtension<DataObject&static>
+ * @extends Extension<DataObject&static>
  */
-class WorkflowApplicable extends DataExtension
+class WorkflowApplicable extends Extension
 {
     private static $has_one = [
         'WorkflowDefinition' => WorkflowDefinition::class,
@@ -51,6 +51,15 @@ class WorkflowApplicable extends DataExtension
 
     private static $many_many = [
         'AdditionalWorkflowDefinitions' => WorkflowDefinition::class
+    ];
+
+    private static array $scaffold_cms_fields_settings = [
+        'ignoreFields' => [
+            'WorkflowDefinition',
+        ],
+        'ignoreRelations' => [
+            'AdditionalWorkflowDefinitions',
+        ],
     ];
 
     private static $dependencies = [
@@ -295,7 +304,7 @@ class WorkflowApplicable extends DataExtension
         $CMSEditLink = null;
 
         if ($this->owner instanceof CMSPreviewable) {
-            $CMSEditLink = $this->owner->CMSEditLink();
+            $CMSEditLink = $this->owner->getCMSEditLink();
         } elseif ($this->owner->hasMethod('WorkflowLink')) {
             $CMSEditLink = $this->owner->WorkflowLink();
         }
