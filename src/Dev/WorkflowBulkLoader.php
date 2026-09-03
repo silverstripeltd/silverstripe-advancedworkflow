@@ -56,7 +56,7 @@ class WorkflowBulkLoader extends BulkLoader
      */
     protected function processRecord($record, $columnMap, &$results, $preview = false)
     {
-        $posted = Controller::curr()->getRequest()->postVars();
+        $posted = Controller::curr()?->getRequest()->postVars() ?? [];
         $default = WorkflowDefinitionExporter::$export_filename_prefix.'0.yml';
         $filename = (isset($posted['_CsvFile']['name']) ? $posted['_CsvFile']['name'] : $default);
 
