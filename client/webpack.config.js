@@ -17,8 +17,7 @@ const scssRule = {
   use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
 };
 
-// Workflow builder bundle (bundles its own React). The CMS documentation
-// bundle was extracted into silverstripeltd/silverstripe-cms-documentation.
+// Workflow builder bundle (bundles its own React).
 const workflow = {
   entry: {
     bundle: './src/main.js',

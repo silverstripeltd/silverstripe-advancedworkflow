@@ -24,15 +24,8 @@
         "silverstripe/framework": "^6.1",
         "silverstripe/admin": "^3",
         "silverstripe/versioned": "^3",
-        "symfony/yaml": "^7.0",
-        "silverstripeltd/silverstripe-cms-documentation": "dev-main"
+        "symfony/yaml": "^7.0"
     },
-    "repositories": [
-        {
-          "type": "git",
-          "url": "git@github.com:silverstripeltd/silverstripe-cms-documentation.git"
-        }
-    ],
     "require-dev": {
         "phpunit/phpunit": "^11.3",
         "squizlabs/php_codesniffer": "^3",
