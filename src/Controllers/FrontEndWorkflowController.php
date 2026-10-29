@@ -6,6 +6,7 @@ use Exception;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Forms\Form;
+use SilverStripe\Model\List\SS_List;
 use SilverStripe\ORM\DataObject;
 use Symbiote\AdvancedWorkflow\DataObjects\WorkflowTransition;
 use Symbiote\AdvancedWorkflow\Forms\FrontendWorkflowForm;
@@ -43,7 +44,7 @@ abstract class FrontEndWorkflowController extends Controller
         if (!$this->contextObj) {
             if ($id = $this->getContextID()) {
                 $cType = $this->getContextType();
-                $cObj = DataObject::get_by_id($cType, $id);
+                $cObj = DataObject::get($cType)->setUseCache(true)->byID($id);
                 if ($cObj) {
                     $this->contextObj = $cObj->canView() ? $cObj : null;
                 }
@@ -140,7 +141,7 @@ abstract class FrontEndWorkflowController extends Controller
     {
         $trans = null;
         if ($this->transitionID) {
-            $trans = DataObject::get_by_id(WorkflowTransition::class, $this->transitionID);
+            $trans = WorkflowTransition::get()->setUseCache(true)->byID($this->transitionID);
         }
         return $trans;
     }
@@ -187,10 +188,11 @@ abstract class FrontEndWorkflowController extends Controller
         $action->BaseAction()->execute($this->contextObj->getWorkflowInstance());
 
         //get valid transitions
+        /** @var SS_List $transitions */
         $transitions = $action->getValidTransitions();
 
         //tell instance to execute transition if it's in the permitted list
-        if ($transitions->find('ID', $this->transitionID)) {
+        if ($transitions->filter('ID', $this->transitionID)->exists()) {
             $this->contextObj->getWorkflowInstance()->performTransition($this->getCurrentTransition());
         }
     }

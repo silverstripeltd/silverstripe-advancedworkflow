@@ -2,7 +2,10 @@
 
 namespace Symbiote\AdvancedWorkflow\Actions;
 
+use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Email\Email;
+use SilverStripe\Core\Convert;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\HeaderField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\TextareaField;
@@ -11,13 +14,12 @@ use SilverStripe\Forms\ToggleCompositeField;
 use SilverStripe\ORM\CMSPreviewable;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
+use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
-use SilverStripe\View\ArrayData;
-use SilverStripe\View\SSViewer;
-use Swift_RfcComplianceException;
 use Symbiote\AdvancedWorkflow\DataObjects\WorkflowAction;
 use Symbiote\AdvancedWorkflow\DataObjects\WorkflowInstance;
+use Symfony\Component\Mime\Exception\RfcComplianceException;
 
 /**
  * A workflow action that notifies users attached to the workflow path that they have a task awaiting them.
@@ -31,6 +33,7 @@ class NotifyUsersWorkflowAction extends WorkflowAction
     /**
      * @config
      * @var bool Should templates be constrained to just known-safe variables.
+     * @deprecated 7.2.4 Will be removed without equivalent functionality to replace it in a future major release.
      */
     private static $whitelist_template_variables = false;
 
@@ -84,9 +87,21 @@ class NotifyUsersWorkflowAction extends WorkflowAction
 
     public function execute(WorkflowInstance $workflow)
     {
+        if (!$this->EmailTemplate) {
+            Injector::inst()->get(LoggerInterface::class)->warning(
+                'No email template available for notify users workflow action '
+                . "'{$this->Title}' in workflow '{$this->WorkflowDef()?->Title}'."
+            );
+            return true;
+        }
+
         $members = $workflow->getAssignedMembers();
 
         if (!$members || !count($members ?? [])) {
+            Injector::inst()->get(LoggerInterface::class)->warning(
+                'No members to send emails to for notify users workflow action '
+                . "'{$this->Title}' in workflow '{$this->WorkflowDef()?->Title}'."
+            );
             return true;
         }
 
@@ -115,55 +130,82 @@ class NotifyUsersWorkflowAction extends WorkflowAction
             'Now' => DBDatetime::now()
         ])->renderWith('Includes/CommentHistory');
 
-        $from = str_replace(array_keys($variables ?? []), array_values($variables ?? []), $this->EmailFrom ?? '');
-        $subject = str_replace(array_keys($variables ?? []), array_values($variables ?? []), $this->EmailSubject ?? '');
-
-        if ($this->config()->get('whitelist_template_variables')) {
-            $item = ArrayData::create([
-                'Initiator' => ArrayData::create($initiatorFields),
-                'Member' => ArrayData::create($memberFields),
-                'Context' => ArrayData::create($contextFields),
-                'CommentHistory' => $variables["\$CommentHistory"]
-            ]);
-        } else {
-            $item = $workflow->customise([
-                'Items' => $workflow->Actions(),
-                'Member' => $member,
-                'Context' => ArrayData::create($contextFields),
-                'CommentHistory' => $variables["\$CommentHistory"]
-            ]);
+        // Let developers add their own notification variables (substituted as literal text, not evaluated)
+        $customVariables = [];
+        $this->extend('updateNotificationVariables', $customVariables, $workflow);
+        foreach ($customVariables as $name => $value) {
+            $variables[$name] = $value;
         }
 
+        // Subject and from address are plain-text headers, so their values are substituted unescaped.
+        $from = $this->replaceVariables($this->EmailFrom ?? '', $variables, false);
+        $subject = $this->replaceVariables($this->EmailSubject ?? '', $variables, false);
 
-        $view = SSViewer::fromString($this->EmailTemplate);
-        $this->extend('updateView', $view);
-
+        $emailSent = false;
         foreach ($members as $member) {
             if ($member->Email) {
                 // We bind in the assignee at this point, as it changes each loop iteration
-                $assigneeVars = $this->getMemberFields($member);
-                if (count($assigneeVars ?? [])) {
-                    $item->Assignee = ArrayData::create($assigneeVars);
+                $replacements = $variables;
+                foreach ($this->getMemberFields($member) as $field => $val) {
+                    $replacements["\$Assignee.$field"] = $val;
                 }
-
-                $body = $view->process($item);
+                $body = $this->replaceVariables($this->EmailTemplate ?? '', $replacements);
 
                 $email = Email::create();
                 try {
                     $email->setTo($member->Email);
-                } catch (Swift_RfcComplianceException $exception) {
+                } catch (RfcComplianceException) {
                     // If the email address isn't valid we should skip it rather than break
                     // the rest of the processing
                     continue;
                 }
                 $email->setSubject($subject);
-                $email->setFrom($from);
+                if ($from) {
+                    $email->setFrom($from);
+                }
                 $email->setBody($body);
                 $email->send();
+                $emailSent = true;
             }
         }
 
+        if (!$emailSent) {
+            Injector::inst()->get(LoggerInterface::class)->warning(
+                'No email was sent for notify users workflow action '
+                . "'{$this->Title}' in workflow '{$this->WorkflowDef()?->Title}'."
+            );
+        }
+
         return true;
+    }
+
+    /**
+     * Substitute the known notification variables into author-controlled content as literal text,
+     * never evaluating it as a template. With $escape each value is cast to its safe HTML form,
+     * matching the escaping the template engine used to apply to the email body.
+     *
+     * @param array<string, mixed> $variables
+     */
+    private function replaceVariables(string $content, array $variables, bool $escape = true): string
+    {
+        // Match a whole $Name or {$Name} token (including dotted names) so a known variable can never
+        // replace the prefix of a longer unknown one, and inserted values are never re-scanned.
+        $token = '[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*';
+        return preg_replace_callback(
+            '/\{\$(' . $token . ')\}|\$(' . $token . ')/',
+            function (array $matches) use ($variables, $escape): string {
+                $name = '$' . (($matches[1] ?? '') !== '' ? $matches[1] : $matches[2]);
+                if (!array_key_exists($name, $variables)) {
+                    return $matches[0];
+                }
+                $value = $variables[$name];
+                if (!$escape) {
+                    return (string) $value;
+                }
+                return $value instanceof DBField ? (string) $value->forTemplate() : Convert::raw2xml((string) $value);
+            },
+            $content
+        ) ?? '';
     }
 
     /**
@@ -185,7 +227,7 @@ class NotifyUsersWorkflowAction extends WorkflowAction
         }
 
         if ($target instanceof CMSPreviewable) {
-            $result['CMSLink'] = $target->CMSEditLink();
+            $result['CMSLink'] = $target->getCMSEditLink();
         } elseif ($target->hasMethod('WorkflowLink')) {
             $result['CMSLink'] = $target->WorkflowLink();
         }
@@ -207,7 +249,7 @@ class NotifyUsersWorkflowAction extends WorkflowAction
      * @param Member $member An optional member to use. If null, will use the current logged in member
      * @return array
      */
-    public function getMemberFields(Member $member = null)
+    public function getMemberFields(?Member $member = null)
     {
         if (!$member) {
             $member = Security::getCurrentUser();

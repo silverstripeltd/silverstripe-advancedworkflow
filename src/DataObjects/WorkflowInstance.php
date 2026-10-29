@@ -17,7 +17,7 @@ use SilverStripe\Forms\HiddenField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TabSet;
 use SilverStripe\Forms\TreeMultiselectField;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\HasManyList;
 use SilverStripe\ORM\ManyManyList;
@@ -271,7 +271,7 @@ class WorkflowInstance extends DataObject
                 )->byID($this->TargetID);
             }
             if (!$targetObject) {
-                $targetObject = DataObject::get_by_id($this->TargetClass, $this->TargetID);
+                $targetObject = DataObject::get($this->TargetClass)->setUseCache(true)->byID($this->TargetID);
             }
 
             return $targetObject;
@@ -324,7 +324,7 @@ class WorkflowInstance extends DataObject
      * @param WorkflowDefinition $definition
      * @param DataObject $for
      */
-    public function beginWorkflow(WorkflowDefinition $definition, DataObject $for = null)
+    public function beginWorkflow(WorkflowDefinition $definition, ?DataObject $for = null)
     {
         if (!$this->ID) {
             $this->write();
@@ -455,7 +455,7 @@ class WorkflowInstance extends DataObject
         $action          = $this->CurrentAction();
         $allTransitions  = $action->BaseAction()->Transitions();
 
-        $valid = $allTransitions->find('ID', $transition->ID);
+        $valid = $allTransitions->filter('ID', $transition->ID)->exists();
         if (!$valid) {
             throw new Exception(
                 sprintf(_t(
@@ -467,7 +467,7 @@ class WorkflowInstance extends DataObject
 
         $action->actionComplete($transition);
 
-        $definition = DataObject::get_by_id(WorkflowAction::class, $transition->NextActionID);
+        $definition = WorkflowAction::get()->setUseCache(true)->byID($transition->NextActionID);
         $action = $definition->getInstanceForWorkflow();
         $action->WorkflowID   = $this->ID;
         $action->write();
@@ -585,10 +585,11 @@ class WorkflowInstance extends DataObject
         // This method primarily "protects" access to a WorkflowInstance, but assumes access only to be granted to
         // users assigned-to that WorkflowInstance. However; lowly authors (users entering items into a workflow) are
         // not assigned - but we still wish them to see their submitted content.
-        $inWorkflowGroupOrUserTables = ($member->inGroups($this->Groups()) || $this->Users()->find('ID', $member->ID));
+        $inWorkflowGroupOrUserTables = $this->Users()->filter('ID', $member->ID)->exists()
+            || $member->inGroups($this->Groups());
         // This method is used in more than just the ModelAdmin. Check for the current controller to determine where
         // canView() expectations differ
-        if ($this->getTarget() && Controller::curr()->getAction() == 'index' && !$inWorkflowGroupOrUserTables) {
+        if ($this->getTarget() && Controller::curr()?->getAction() == 'index' && !$inWorkflowGroupOrUserTables) {
             if ($this->getVersionedConnection($this->getTarget()->ID, $member->ID)) {
                 return true;
             }
@@ -669,7 +670,6 @@ class WorkflowInstance extends DataObject
         $fields->push(HiddenField::create('TransitionID', ''));
         // Let the Active Action update the fields that the user can interact with so that data can be
         // stored for the workflow.
-        $action->updateWorkflowFields($fields);
         $action->invokeWithExtensions('updateWorkflowFields', $fields);
         return $fields;
     }
